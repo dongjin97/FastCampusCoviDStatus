@@ -1,0 +1,6 @@
+framework module Pods_CovidStatusBoard {
+  umbrella header "Pods-CovidStatusBoard-umbrella.h"
+
+  export *
+  module * { export * }
+}
