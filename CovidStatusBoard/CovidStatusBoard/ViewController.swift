@@ -13,12 +13,19 @@ class ViewController: UIViewController {
     @IBOutlet weak var totalCaseLabel: UILabel!
     @IBOutlet weak var newCaseLabel: UILabel!
     @IBOutlet weak var pieChartView: PieChartView!
+    @IBOutlet weak var labelStackView: UIStackView!
+    @IBOutlet weak var indichatorView: UIActivityIndicatorView!
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.indichatorView.startAnimating()
         self.fetchCovidOverview(completionHandler: { [weak self] result in
             guard let self = self else { return }
             switch result {
             case let .success(result):
+                self.indichatorView.stopAnimating()
+                self.indichatorView.isHidden = true
+                self.labelStackView.isHidden = false
+                self.pieChartView.isHidden = false
                 self.configureStackView(koreaCovidOverView: result.korea)
                 let covidOverViewList = self.makeCovidOverViewList(cityCovidOverView: result)
                 self.configureChartView(covidOverViewlist: covidOverViewList)
@@ -49,6 +56,7 @@ class ViewController: UIViewController {
         ]
     }
     func configureChartView(covidOverViewlist : [CovidOverView]){
+        self.pieChartView.delegate = self
         let entries = covidOverViewlist.compactMap { [weak self] overview -> PieChartDataEntry? in
             guard let self = self else {return nil}
             return PieChartDataEntry(value: self.removeFormatString(string: overview.newCase), label: overview.countryName, data: overview)
@@ -106,3 +114,13 @@ class ViewController: UIViewController {
 
 
 
+extension ViewController :ChartViewDelegate{
+    //차트에서 항목을 선택 했을때 호출되는함수
+    //entry 선택된 항목에 저장된 데이터르 가져 올 수 있음.
+    func chartValueSelected(_ chartView: ChartViewBase, entry: ChartDataEntry, highlight: Highlight) {
+        guard let covidDetailViewController = self.storyboard?.instantiateViewController(withIdentifier: "CovidDetailViewController") as? CovidDetailViewController else{ return }
+        guard let covidOVerView = entry.data as? CovidOverView else {return} //CovidOverView로 다운캐스팅
+        covidDetailViewController.covidOverview = covidOVerView
+        self.navigationController?.pushViewController(covidDetailViewController, animated: true)
+    }
+}
